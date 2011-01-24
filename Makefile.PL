@@ -16,7 +16,7 @@ WriteMakefile(
         'Moose' => 1.14,
         'FFmpeg::Command' => 0.15,
         'Capture::Tiny' => 0.01,
-        'Regexp::Common'  => 2.111
+        'Scalar::Util'  => 0
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'FFmpeg-Thumbnail-*' },

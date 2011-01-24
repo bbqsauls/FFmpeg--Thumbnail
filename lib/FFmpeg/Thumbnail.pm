@@ -7,6 +7,7 @@ use Moose;
 use FFmpeg::Command;
 use Capture::Tiny qw/ capture / ;
 use Regexp::Common;
+use Scalar::Util qw/looks_like_number/;
 
 =head1 NAME
 
@@ -18,7 +19,7 @@ Version 0.01
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -270,9 +271,9 @@ Clear the 'ffmpeg' and 'duration' attributes.
 =cut
 sub _reset {
     my ( $self ) = @_;
-    return
-    $self->clear_ffmpeg &&
+    $self->clear_ffmpeg;
     $self->clear_duration;
+    return 1;
 };
 
 =head2 _validate_offset
@@ -282,8 +283,7 @@ Checks $offset to make sure that it is numeric and <= $self->duration.
 =cut
 sub _validate_offset {
     my ($self, $offset ) = @_;
-    return $offset =~ $RE{num}{real}{-keep} &&
-        $offset <= $self->duration;
+    return $offset && looks_like_number( $offset ) and $offset <= $self->duration  ;
 }
 
 

@@ -17,7 +17,7 @@
 #     LICENSE => q[perl]
 #     NAME => q[FFmpeg::Thumbnail]
 #     PL_FILES => {  }
-#     PREREQ_PM => { Test::More=>q[0], Capture::Tiny=>q[0.01], Regexp::Common=>q[2.111], FFmpeg::Command=>q[0.15], Moose=>q[1.14] }
+#     PREREQ_PM => { Test::More=>q[0], Scalar::Util=>q[0], Capture::Tiny=>q[0.01], FFmpeg::Command=>q[0.15], Moose=>q[1.14] }
 #     VERSION_FROM => q[lib/FFmpeg/Thumbnail.pm]
 #     clean => { FILES=>q[FFmpeg-Thumbnail-*] }
 #     dist => { COMPRESS=>q[gzip -9f], SUFFIX=>q[gz] }
@@ -59,11 +59,11 @@ DIRFILESEP = /
 DFSEP = $(DIRFILESEP)
 NAME = FFmpeg::Thumbnail
 NAME_SYM = FFmpeg_Thumbnail
-VERSION = 0.01
+VERSION = 0.02
 VERSION_MACRO = VERSION
-VERSION_SYM = 0_01
+VERSION_SYM = 0_02
 DEFINE_VERSION = -D$(VERSION_MACRO)=\"$(VERSION)\"
-XS_VERSION = 0.01
+XS_VERSION = 0.02
 XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
 INST_ARCHLIB = blib/arch
@@ -260,7 +260,7 @@ RCS_LABEL = rcs -Nv$(VERSION_SYM): -q
 DIST_CP = best
 DIST_DEFAULT = tardist
 DISTNAME = FFmpeg-Thumbnail
-DISTVNAME = FFmpeg-Thumbnail-0.01
+DISTVNAME = FFmpeg-Thumbnail-0.02
 
 
 # --- MakeMaker macro section:
@@ -481,7 +481,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) Generating META.yml
 	$(NOECHO) $(ECHO) '--- #YAML:1.0' > META_new.yml
 	$(NOECHO) $(ECHO) 'name:               FFmpeg-Thumbnail' >> META_new.yml
-	$(NOECHO) $(ECHO) 'version:            0.01' >> META_new.yml
+	$(NOECHO) $(ECHO) 'version:            0.02' >> META_new.yml
 	$(NOECHO) $(ECHO) 'abstract:           Create a thumbnail from a video' >> META_new.yml
 	$(NOECHO) $(ECHO) 'author:' >> META_new.yml
 	$(NOECHO) $(ECHO) '    - Brian Sauls <bbqsauls@cpan.org>' >> META_new.yml
@@ -495,7 +495,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) '    Capture::Tiny:    0.01' >> META_new.yml
 	$(NOECHO) $(ECHO) '    FFmpeg::Command:  0.15' >> META_new.yml
 	$(NOECHO) $(ECHO) '    Moose:            1.14' >> META_new.yml
-	$(NOECHO) $(ECHO) '    Regexp::Common:   2.111' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Scalar::Util:     0' >> META_new.yml
 	$(NOECHO) $(ECHO) '    Test::More:       0' >> META_new.yml
 	$(NOECHO) $(ECHO) 'no_index:' >> META_new.yml
 	$(NOECHO) $(ECHO) '    directory:' >> META_new.yml
@@ -795,14 +795,14 @@ testdb_static :: testdb_dynamic
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd :
-	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="0.01">' > $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="0.02">' > $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <ABSTRACT>Create a thumbnail from a video</ABSTRACT>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <AUTHOR>Brian Sauls &lt;bbqsauls@cpan.org&gt;</AUTHOR>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <IMPLEMENTATION>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <REQUIRE NAME="Capture::Tiny" VERSION="0.01" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <REQUIRE NAME="FFmpeg::Command" VERSION="0.15" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <REQUIRE NAME="Moose::" VERSION="1.14" />' >> $(DISTNAME).ppd
-	$(NOECHO) $(ECHO) '        <REQUIRE NAME="Regexp::Common" VERSION="2.111" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <REQUIRE NAME="Scalar::Util" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <REQUIRE NAME="Test::More" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <ARCHITECTURE NAME="darwin-2level-5.12" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <CODEBASE HREF="" />' >> $(DISTNAME).ppd

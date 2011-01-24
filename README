@@ -1,7 +1,7 @@
 FFmpeg-Thumbnail
 
 VERSION
-    Version 0.01
+    Version 0.02
 
 DESCRIPTION
     A wrapper for FFmpeg::Command specifically for creating video

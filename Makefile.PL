@@ -18,6 +18,16 @@ WriteMakefile(
         'Capture::Tiny' => 0.01,
         'Scalar::Util'  => 0
     },
+    META_MERGE	=> {
+		'meta-spec'	=> { version => 2 },
+		resources	=> {
+			repository => {
+				type=> 'git',
+				url => 'https://github.com/bbqsauls/FFmpeg--Thumbnail.git',
+				web => 'https://github.com/bbqsauls/FFmpeg--Thumbnail',
+			},
+		},
+    },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'FFmpeg-Thumbnail-*' },
 );

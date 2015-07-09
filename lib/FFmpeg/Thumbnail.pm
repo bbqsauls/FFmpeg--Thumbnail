@@ -181,6 +181,24 @@ has 'output_height' => (
     default => '240',
 );
 
+=head2 aspect_strategy
+
+How to treat video aspect ratios. If you pass I<crop>, the input video
+frame will be cropped to fit into the set width x height.
+Default is I<undef>: stretch or squeeze video according to output_width and
+output_height.
+
+=cut
+
+# TODO: "If you pass in I<letterbox>, the video frame will be resized and
+# letterboxed to fit into the set dimensions."
+
+has 'aspect_strategy' => (
+    is => 'rw',
+    isa => 'Str|Undef',
+    default => undef,
+);
+
 =head2 hide_log_output
 
 Turns off ffmpeg's log output.  You can still access this through the stdout() and
@@ -222,6 +240,15 @@ sub create_thumbnail {
 
     my $off_val = $self->_validate_offset( $offset ) ? $offset : $self->offset;
 
+    my @aspect_strategy;
+    if($self->aspect_strategy() && $self->aspect_strategy() eq 'crop'){
+        @aspect_strategy = ('-vf', "crop=(ih*". ($self->output_width / $self->output_height) ."):ih");
+    }elsif($self->aspect_strategy() && $self->aspect_strategy() eq 'letterbox'){
+	# https://kevinlocke.name/bits/2012/08/25/letterboxing-with-ffmpeg-avconv-for-mobile/
+	# TODO: couldn't get this to work, something with options()'s interpolation...
+        @aspect_strategy = ('-vf', "scale=iw*sar*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih):ih*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih),pad=". $self->output_width .":". $self->output_height .":(ow-iw)/2:(oh-ih)/2");
+    }
+
     $self->output_file( $filename || $self->filename );
     $self->options(
         '-y',                       # overwrite files
@@ -229,6 +256,7 @@ sub create_thumbnail {
         '-vframes' => 1,            # number of frames to record
         '-ss'      => $off_val,     # position
         '-s'       => $self->output_width.'x'.$self->output_height,    # sets frame size
+        @aspect_strategy,
         '-loglevel'=> 'quiet',      # tones down log output
     );
     return $self->hide_log_output ? capture { $self->ffmpeg->exec() } : $self->ffmpeg->exec() ;

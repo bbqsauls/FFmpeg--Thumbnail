@@ -153,6 +153,22 @@ has 'offset' => (
     default => 0,
 );
 
+=head2 offset_strategy
+
+If set, overrides the offset parameter with a dynamic time offset scheme.
+Currently only 'middle' is implemented, where a thumbnail will be extracted
+at the middle of the video, based on its total runtime.
+Defaults to I<undef> (not used).
+
+=cut
+
+has 'offset_strategy' => (
+    is => 'rw',
+    isa => 'Str|Undef',
+    default => undef,
+);
+
+
 =head2 file_format
 
 Ffmpeg output file muxer, passed to the '-f' argument. Defaults to 'image2',
@@ -248,7 +264,13 @@ Usage:
 sub create_thumbnail {
     my ( $self, $offset, $filename ) = @_;
 
-    my $off_val = $self->_validate_offset( $offset ) ? $offset : $self->offset;
+    my $off_val;
+    if( $self->offset_strategy && $self->offset_strategy eq 'middle'){
+        $off_val = $self->duration > 1 ? int($self->duration / 2) : sprintf("%.1f", $self->duration / 2);
+    }else{
+        # validate offset, use default (0) as failover
+        $off_val = $self->_validate_offset( $offset ) ? $offset : $self->offset;
+    }
 
     my @aspect_strategy;
     if($self->aspect_strategy() && $self->aspect_strategy() eq 'crop'){
@@ -265,6 +287,7 @@ sub create_thumbnail {
         '-f'       => $self->file_format,     # force format
         '-vframes' => 1,            # number of frames to record
         '-ss'      => $off_val,     # position
+#       '-noaccurate_seek',         # we can't pass -ss as an input option yet, and sadly only very recent ffmpegs offer this switch
         '-s'       => $self->output_width.'x'.$self->output_height,    # sets frame size
         @aspect_strategy,
         '-loglevel'=> 'quiet',      # tones down log output

@@ -134,9 +134,16 @@ has 'filename' => (
     default => '/tmp/thumbnail.png',
 );
 
-=head2 default_offset
+=head2 offset
 
-The time in the video (in seconds) at which to grab the thumbnail
+The time in the video (in seconds) at which to grab the thumbnail. Defaults
+to 0.
+
+Note that ffmpeg has two seek modes, depending on the -ss option being used as
+an input file option or an output file option. The latter is slower but more
+accurate and due to the internal layout of this module the slower mode is
+currently used here. So be aware of the fact that with bigger videos, and
+seek offsets further into the file, thumbnailing may become unnecessarily slow.
 
 =cut
 
@@ -148,7 +155,10 @@ has 'offset' => (
 
 =head2 file_format
 
-Ffmpeg output file format, used by the '-f' argument. Defaults to 'image2' (png). 'mjpeg' (jpeg) is also known to work.
+Ffmpeg output file muxer, passed to the '-f' argument. Defaults to 'image2',
+ffmpeg's standard image file muxer, which is able to write various image formats
+based on the output file extension you choose. When you write a file with no
+file suffix, image2 defaults to jpeg. 'mjpeg' is also known to work.
 
 =cut
 has 'file_format' => (
@@ -311,7 +321,8 @@ Checks $offset to make sure that it is numeric and <= $self->duration.
 =cut
 sub _validate_offset {
     my ($self, $offset ) = @_;
-    return $offset && looks_like_number( $offset ) and $offset <= $self->duration  ;
+
+    return ($offset && looks_like_number( $offset ) && $offset <= $self->duration) ? 1 : 0;
 }
 
 

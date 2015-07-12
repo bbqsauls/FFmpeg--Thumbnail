@@ -210,14 +210,13 @@ has 'output_height' => (
 =head2 aspect_strategy
 
 How to treat video aspect ratios. If you pass I<crop>, the input video
-frame will be cropped to fit into the set width x height.
+frame will be cropped to fit into the set width x height. When you pass in
+I<letterbox>, the video frame will be resized and letterboxed to fit into
+the set dimensions.
 Default is I<undef>: stretch or squeeze video according to output_width and
 output_height.
 
 =cut
-
-# TODO: "If you pass in I<letterbox>, the video frame will be resized and
-# letterboxed to fit into the set dimensions."
 
 has 'aspect_strategy' => (
     is => 'rw',
@@ -276,9 +275,8 @@ sub create_thumbnail {
     if($self->aspect_strategy() && $self->aspect_strategy() eq 'crop'){
         @aspect_strategy = ('-vf', "crop=(ih*". ($self->output_width / $self->output_height) ."):ih");
     }elsif($self->aspect_strategy() && $self->aspect_strategy() eq 'letterbox'){
-	# https://kevinlocke.name/bits/2012/08/25/letterboxing-with-ffmpeg-avconv-for-mobile/
-	# TODO: couldn't get this to work, something with options()'s interpolation...
-        @aspect_strategy = ('-vf', "scale=iw*sar*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih):ih*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih),pad=". $self->output_width .":". $self->output_height .":(ow-iw)/2:(oh-ih)/2");
+	# filter_graph from: https://kevinlocke.name/bits/2012/08/25/letterboxing-with-ffmpeg-avconv-for-mobile/
+        @aspect_strategy = ('-vf', "scale=iw*sar*min(". $self->output_width .'/(iw*sar)\,'. $self->output_height ."/ih):ih*min(". $self->output_width .'/(iw*sar)\,'. $self->output_height ."/ih),pad=". $self->output_width .":". $self->output_height .":(ow-iw)/2:(oh-ih)/2");
     }
 
     $self->output_file( $filename || $self->filename );

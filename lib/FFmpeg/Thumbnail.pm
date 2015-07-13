@@ -140,10 +140,9 @@ The time in the video (in seconds) at which to grab the thumbnail. Defaults
 to 0.
 
 Note that ffmpeg has two seek modes, depending on the -ss option being used as
-an input file option or an output file option. The latter is slower but more
-accurate and due to the internal layout of this module the slower mode is
-currently used here. So be aware of the fact that with bigger videos, and
-seek offsets further into the file, thumbnailing may become unnecessarily slow.
+an input file option or an output file option. The first one is less accurate
+but used here as it's much faster with long videos and seek offsets further
+into the file.
 
 =cut
 
@@ -280,17 +279,19 @@ sub create_thumbnail {
     }
 
     $self->output_file( $filename || $self->filename );
+    $self->ffmpeg->infile_options(
+        '-ss'      => $off_val,     # position, as input file option to have fast seeks
+    );
     $self->options(
         '-y',                       # overwrite files
         '-f'       => $self->file_format,     # force format
         '-vframes' => 1,            # number of frames to record
-        '-ss'      => $off_val,     # position
 #       '-noaccurate_seek',         # we can't pass -ss as an input option yet, and sadly only very recent ffmpegs offer this switch
         '-s'       => $self->output_width.'x'.$self->output_height,    # sets frame size
         @aspect_strategy,
         '-loglevel'=> 'quiet',      # tones down log output
     );
-    return $self->hide_log_output ? capture { $self->ffmpeg->exec() } : $self->ffmpeg->exec() ;
+    return $self->hide_log_output ? capture { $self->ffmpeg->execute() } : $self->ffmpeg->execute() ;
 }
 
 

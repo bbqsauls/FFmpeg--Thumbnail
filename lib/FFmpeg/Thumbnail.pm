@@ -134,9 +134,15 @@ has 'filename' => (
     default => '/tmp/thumbnail.png',
 );
 
-=head2 default_offset
+=head2 offset
 
-The time in the video (in seconds) at which to grab the thumbnail
+The time in the video (in seconds) at which to grab the thumbnail. Defaults
+to 0.
+
+Note that ffmpeg has two seek modes, depending on the -ss option being used as
+an input file option or an output file option. The first one is less accurate
+but used here as it's much faster with long videos and seek offsets further
+into the file.
 
 =cut
 
@@ -146,9 +152,28 @@ has 'offset' => (
     default => 0,
 );
 
+=head2 offset_strategy
+
+If set, overrides the offset parameter with a dynamic time offset scheme.
+Currently only 'middle' is implemented, where a thumbnail will be extracted
+at the middle of the video, based on its total runtime.
+Defaults to I<undef> (not used).
+
+=cut
+
+has 'offset_strategy' => (
+    is => 'rw',
+    isa => 'Str|Undef',
+    default => undef,
+);
+
+
 =head2 file_format
 
-Ffmpeg output file format, used by the '-f' argument. Defaults to 'image2' (png). 'mjpeg' (jpeg) is also known to work.
+Ffmpeg output file muxer, passed to the '-f' argument. Defaults to 'image2',
+ffmpeg's standard image file muxer, which is able to write various image formats
+based on the output file extension you choose. When you write a file with no
+file suffix, image2 defaults to jpeg. 'mjpeg' is also known to work.
 
 =cut
 has 'file_format' => (
@@ -184,14 +209,13 @@ has 'output_height' => (
 =head2 aspect_strategy
 
 How to treat video aspect ratios. If you pass I<crop>, the input video
-frame will be cropped to fit into the set width x height.
+frame will be cropped to fit into the set width x height. When you pass in
+I<letterbox>, the video frame will be resized and letterboxed to fit into
+the set dimensions.
 Default is I<undef>: stretch or squeeze video according to output_width and
 output_height.
 
 =cut
-
-# TODO: "If you pass in I<letterbox>, the video frame will be resized and
-# letterboxed to fit into the set dimensions."
 
 has 'aspect_strategy' => (
     is => 'rw',
@@ -238,28 +262,36 @@ Usage:
 sub create_thumbnail {
     my ( $self, $offset, $filename ) = @_;
 
-    my $off_val = $self->_validate_offset( $offset ) ? $offset : $self->offset;
+    my $off_val;
+    if( $self->offset_strategy && $self->offset_strategy eq 'middle'){
+        $off_val = $self->duration > 1 ? int($self->duration / 2) : sprintf("%.1f", $self->duration / 2);
+    }else{
+        # validate offset, use default (0) as failover
+        $off_val = $self->_validate_offset( $offset ) ? $offset : $self->offset;
+    }
 
     my @aspect_strategy;
     if($self->aspect_strategy() && $self->aspect_strategy() eq 'crop'){
         @aspect_strategy = ('-vf', "crop=(ih*". ($self->output_width / $self->output_height) ."):ih");
     }elsif($self->aspect_strategy() && $self->aspect_strategy() eq 'letterbox'){
-	# https://kevinlocke.name/bits/2012/08/25/letterboxing-with-ffmpeg-avconv-for-mobile/
-	# TODO: couldn't get this to work, something with options()'s interpolation...
-        @aspect_strategy = ('-vf', "scale=iw*sar*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih):ih*min(". $self->output_width ."/(iw*sar)\,". $self->output_height ."/ih),pad=". $self->output_width .":". $self->output_height .":(ow-iw)/2:(oh-ih)/2");
+	# filter_graph from: https://kevinlocke.name/bits/2012/08/25/letterboxing-with-ffmpeg-avconv-for-mobile/
+        @aspect_strategy = ('-vf', "scale=iw*sar*min(". $self->output_width .'/(iw*sar)\,'. $self->output_height ."/ih):ih*min(". $self->output_width .'/(iw*sar)\,'. $self->output_height ."/ih),pad=". $self->output_width .":". $self->output_height .":(ow-iw)/2:(oh-ih)/2");
     }
 
     $self->output_file( $filename || $self->filename );
+    $self->ffmpeg->infile_options(
+        '-ss'      => $off_val,     # position, as input file option to have fast seeks
+    );
     $self->options(
         '-y',                       # overwrite files
         '-f'       => $self->file_format,     # force format
         '-vframes' => 1,            # number of frames to record
-        '-ss'      => $off_val,     # position
+#       '-noaccurate_seek',         # we can't pass -ss as an input option yet, and sadly only very recent ffmpegs offer this switch
         '-s'       => $self->output_width.'x'.$self->output_height,    # sets frame size
         @aspect_strategy,
         '-loglevel'=> 'quiet',      # tones down log output
     );
-    return $self->hide_log_output ? capture { $self->ffmpeg->exec() } : $self->ffmpeg->exec() ;
+    return $self->hide_log_output ? capture { $self->ffmpeg->execute() } : $self->ffmpeg->execute() ;
 }
 
 
@@ -311,7 +343,8 @@ Checks $offset to make sure that it is numeric and <= $self->duration.
 =cut
 sub _validate_offset {
     my ($self, $offset ) = @_;
-    return $offset && looks_like_number( $offset ) and $offset <= $self->duration  ;
+
+    return ($offset && looks_like_number( $offset ) && $offset <= $self->duration) ? 1 : 0;
 }
 
 
